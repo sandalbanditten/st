@@ -33,6 +33,7 @@
 #define UTF_SIZ       4
 #define ESC_BUF_SIZ   (128*UTF_SIZ)
 #define ESC_ARG_SIZ   16
+#define CAR_PER_ARG   4
 #define STR_BUF_SIZ   ESC_BUF_SIZ
 #define STR_ARG_SIZ   ESC_ARG_SIZ
 #define HISTSIZE      2000
@@ -46,6 +47,7 @@
 #define TLINE(y)		((y) < term.scr ? term.hist[((y) + term.histi - \
 				term.scr + HISTSIZE + 1) % HISTSIZE] : \
 				term.line[(y) - term.scr])
+#define TLINE_HIST(y)           ((y) <= HISTSIZE-term.row+2 ? term.hist[(y)] : term.line[(y-HISTSIZE+term.row-3)])
 
 enum term_mode {
 	MODE_WRAP        = 1 << 0,
@@ -146,6 +148,7 @@ typedef struct {
 	int arg[ESC_ARG_SIZ];
 	int narg;              /* nb of args */
 	char mode[2];
+	int carg[ESC_ARG_SIZ][CAR_PER_ARG]; /* colon args */
 } CSIEscape;
 
 /* STR Escape sequence structs */
@@ -167,6 +170,7 @@ static void ttywriteraw(const char *, size_t);
 
 static void csidump(void);
 static void csihandle(void);
+static void readcolonargs(char **, int, int[][CAR_PER_ARG]);
 static void csiparse(void);
 static void csireset(void);
 static int eschandle(uchar);
@@ -208,6 +212,8 @@ static void tdefutf8(char);
 static int32_t tdefcolor(const int *, int *, int);
 static void tdeftran(char);
 static void tstrsequence(uchar);
+static void tsetcolor(int, int, int, uint32_t, uint32_t);
+static char * findlastany(char *, const char**, size_t);
 
 static void drawregion(int, int, int, int);
 
@@ -428,6 +434,20 @@ tlinelen(int y)
 		return i;
 
 	while (i > 0 && TLINE(y)[i - 1].u == ' ')
+		--i;
+
+	return i;
+}
+
+int
+tlinehistlen(int y)
+{
+	int i = term.col;
+
+	if (TLINE_HIST(y)[i - 1].mode & ATTR_WRAP)
+		return i;
+
+	while (i > 0 && TLINE_HIST(y)[i - 1].u == ' ')
 		--i;
 
 	return i;
@@ -733,8 +753,14 @@ sigchld(int a)
 	if ((p = waitpid(pid, &stat, WNOHANG)) < 0)
 		die("waiting for pid %hd failed: %s\n", pid, strerror(errno));
 
-	if (pid != p)
+	if (pid != p) {
+		if (p == 0 && wait(&stat) < 0)
+			die("wait: %s\n", strerror(errno));
+
+		/* reinstall sigchld handler */
+		signal(SIGCHLD, sigchld);
 		return;
+	}
 
 	if (WIFEXITED(stat) && WEXITSTATUS(stat))
 		die("child exited with status %d\n", WEXITSTATUS(stat));
@@ -1218,6 +1244,28 @@ tnewline(int first_col)
 }
 
 void
+readcolonargs(char **p, int cursor, int params[][CAR_PER_ARG])
+{
+	int i = 0;
+	for (; i < CAR_PER_ARG; i++)
+		params[cursor][i] = -1;
+
+	if (**p != ':')
+		return;
+
+	char *np = NULL;
+	i = 0;
+
+	while (**p == ':' && i < CAR_PER_ARG) {
+		while (**p == ':')
+			(*p)++;
+		params[cursor][i] = strtol(*p, &np, 10);
+		*p = np;
+		i++;
+	}
+}
+
+void
 csiparse(void)
 {
 	char *p = csiescseq.buf, *np;
@@ -1239,6 +1287,7 @@ csiparse(void)
 			v = -1;
 		csiescseq.arg[csiescseq.narg++] = v;
 		p = np;
+		readcolonargs(&p, csiescseq.narg-1, csiescseq.carg);
 		if (*p != ';' || csiescseq.narg == ESC_ARG_SIZ)
 			break;
 		p++;
@@ -1458,6 +1507,10 @@ tsetattr(const int *attr, int l)
 				ATTR_STRUCK     );
 			term.c.attr.fg = defaultfg;
 			term.c.attr.bg = defaultbg;
+			term.c.attr.ustyle = -1;
+			term.c.attr.ucolor[0] = -1;
+			term.c.attr.ucolor[1] = -1;
+			term.c.attr.ucolor[2] = -1;
 			break;
 		case 1:
 			term.c.attr.mode |= ATTR_BOLD;
@@ -1469,7 +1522,14 @@ tsetattr(const int *attr, int l)
 			term.c.attr.mode |= ATTR_ITALIC;
 			break;
 		case 4:
-			term.c.attr.mode |= ATTR_UNDERLINE;
+			term.c.attr.ustyle = csiescseq.carg[i][0];
+
+			if (term.c.attr.ustyle != 0)
+				term.c.attr.mode |= ATTR_UNDERLINE;
+			else
+				term.c.attr.mode &= ~ATTR_UNDERLINE;
+
+			term.c.attr.mode ^= ATTR_DIRTYUNDERLINE;
 			break;
 		case 5: /* slow blink */
 			/* FALLTHROUGH */
@@ -1519,6 +1579,18 @@ tsetattr(const int *attr, int l)
 			break;
 		case 49:
 			term.c.attr.bg = defaultbg;
+			break;
+		case 58:
+			term.c.attr.ucolor[0] = csiescseq.carg[i][1];
+			term.c.attr.ucolor[1] = csiescseq.carg[i][2];
+			term.c.attr.ucolor[2] = csiescseq.carg[i][3];
+			term.c.attr.mode ^= ATTR_DIRTYUNDERLINE;
+			break;
+		case 59:
+			term.c.attr.ucolor[0] = -1;
+			term.c.attr.ucolor[1] = -1;
+			term.c.attr.ucolor[2] = -1;
+			term.c.attr.mode ^= ATTR_DIRTYUNDERLINE;
 			break;
 		default:
 			if (BETWEEN(attr[i], 30, 37)) {
@@ -1929,6 +2001,42 @@ csireset(void)
 }
 
 void
+osc4_color_response(int num)
+{
+	int n;
+	char buf[32];
+	unsigned char r, g, b;
+
+	if (xgetcolor(num, &r, &g, &b)) {
+		fprintf(stderr, "erresc: failed to fetch osc4 color %d\n", num);
+		return;
+	}
+
+	n = snprintf(buf, sizeof buf, "\033]4;%d;rgb:%02x%02x/%02x%02x/%02x%02x\007",
+		     num, r, r, g, g, b, b);
+
+	ttywrite(buf, n, 1);
+}
+
+void
+osc_color_response(int index, int num)
+{
+	int n;
+	char buf[32];
+	unsigned char r, g, b;
+
+	if (xgetcolor(index, &r, &g, &b)) {
+		fprintf(stderr, "erresc: failed to fetch osc color %d\n", index);
+		return;
+	}
+
+	n = snprintf(buf, sizeof buf, "\033]%d;rgb:%02x%02x/%02x%02x/%02x%02x\007",
+		     num, r, r, g, g, b, b);
+
+	ttywrite(buf, n, 1);
+}
+
+void
 strhandle(void)
 {
 	char *p = NULL, *dec;
@@ -1966,14 +2074,56 @@ strhandle(void)
 				}
 			}
 			return;
+		case 10:
+			if (narg < 2)
+				break;
+
+			p = strescseq.args[1];
+
+			if (!strcmp(p, "?"))
+				osc_color_response(defaultfg, 10);
+			else if (xsetcolorname(defaultfg, p))
+				fprintf(stderr, "erresc: invalid foreground color: %s\n", p);
+			else
+				redraw();
+			return;
+		case 11:
+			if (narg < 2)
+				break;
+
+			p = strescseq.args[1];
+
+			if (!strcmp(p, "?"))
+				osc_color_response(defaultbg, 11);
+			else if (xsetcolorname(defaultbg, p))
+				fprintf(stderr, "erresc: invalid background color: %s\n", p);
+			else
+				redraw();
+			return;
+		case 12:
+			if (narg < 2)
+				break;
+
+			p = strescseq.args[1];
+
+			if (!strcmp(p, "?"))
+				osc_color_response(defaultcs, 12);
+			else if (xsetcolorname(defaultcs, p))
+				fprintf(stderr, "erresc: invalid cursor color: %s\n", p);
+			else
+				redraw();
+			return;
 		case 4: /* color set */
 			if (narg < 3)
 				break;
 			p = strescseq.args[2];
 			/* FALLTHROUGH */
-		case 104: /* color reset, here p = NULL */
+		case 104: /* color reset */
 			j = (narg > 1) ? atoi(strescseq.args[1]) : -1;
-			if (xsetcolorname(j, p)) {
+
+			if (p && !strcmp(p, "?"))
+				osc4_color_response(j);
+			else if (xsetcolorname(j, p)) {
 				if (par == 104 && narg <= 1)
 					return; /* color reset without parameter */
 				fprintf(stderr, "erresc: invalid color j=%d, p=%s\n",
@@ -2021,6 +2171,61 @@ strparse(void)
 			return;
 		*p++ = '\0';
 	}
+}
+
+void
+externalpipe(const Arg *arg)
+{
+	int to[2];
+	char buf[UTF_SIZ];
+	void (*oldsigpipe)(int);
+	Glyph *bp, *end;
+	int lastpos, n, newline;
+
+	if (pipe(to) == -1)
+		return;
+
+	switch (fork()) {
+	case -1:
+		close(to[0]);
+		close(to[1]);
+		return;
+	case 0:
+		dup2(to[0], STDIN_FILENO);
+		close(to[0]);
+		close(to[1]);
+		execvp(((char **)arg->v)[0], (char **)arg->v);
+		fprintf(stderr, "st: execvp %s\n", ((char **)arg->v)[0]);
+		perror("failed");
+		exit(0);
+	}
+
+	close(to[0]);
+	/* ignore sigpipe for now, in case child exists early */
+	oldsigpipe = signal(SIGPIPE, SIG_IGN);
+	newline = 0;
+	for (n = 0; n <= HISTSIZE + 2; n++) {
+		bp = TLINE_HIST(n);
+		lastpos = MIN(tlinehistlen(n) + 1, term.col) - 1;
+		if (lastpos < 0)
+			break;
+        if (lastpos == 0)
+            continue;
+		end = &bp[lastpos + 1];
+		for (; bp < end; ++bp)
+			if (xwrite(to[1], buf, utf8encode(bp->u, buf)) < 0)
+				break;
+		if ((newline = TLINE_HIST(n)[lastpos].mode & ATTR_WRAP))
+			continue;
+		if (xwrite(to[1], "\n", 1) < 0)
+			break;
+		newline = 0;
+	}
+	if (newline)
+		(void)xwrite(to[1], "\n", 1);
+	close(to[1]);
+	/* restore */
+	signal(SIGPIPE, oldsigpipe);
 }
 
 void
@@ -2515,6 +2720,10 @@ check_control_code:
 	if (width == 2) {
 		gp->mode |= ATTR_WIDE;
 		if (term.c.x+1 < term.col) {
+			if (gp[1].mode == ATTR_WIDE && term.c.x+2 < term.col) {
+				gp[2].u = ' ';
+				gp[2].mode &= ~ATTR_WDUMMY;
+			}
 			gp[1].u = '\0';
 			gp[1].mode = ATTR_WDUMMY;
 		}
@@ -2701,4 +2910,123 @@ redraw(void)
 {
 	tfulldirt();
 	draw();
+}
+
+void
+tsetcolor( int row, int start, int end, uint32_t fg, uint32_t bg )
+{
+	int i = start;
+	for( ; i < end; ++i )
+	{
+		term.line[row][i].fg = fg;
+		term.line[row][i].bg = bg;
+	}
+}
+
+char *
+findlastany(char *str, const char** find, size_t len)
+{
+	char* found = NULL;
+	int i = 0;
+	for(found = str + strlen(str) - 1; found >= str; --found) {
+		for(i = 0; i < len; i++) {
+			if(strncmp(found, find[i], strlen(find[i])) == 0) {
+				return found;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+/*
+** Select and copy the previous url on screen (do nothing if there's no url).
+**
+** FIXME: doesn't handle urls that span multiple lines; will need to add support
+**        for multiline "getsel()" first
+*/
+void
+copyurl(const Arg *arg) {
+	/* () and [] can appear in urls, but excluding them here will reduce false
+	 * positives when figuring out where a given url ends.
+	 */
+	static char URLCHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"abcdefghijklmnopqrstuvwxyz"
+		"0123456789-._~:/?#@!$&'*+,;=%";
+
+	static const char* URLSTRINGS[] = {"http://", "https://"};
+
+	/* remove highlighting from previous selection if any */
+	if(sel.ob.x >= 0 && sel.oe.x >= 0)
+		tsetcolor(sel.nb.y, sel.ob.x, sel.oe.x + 1, defaultfg, defaultbg);
+
+	int i = 0,
+		row = 0, /* row of current URL */
+		col = 0, /* column of current URL start */
+		startrow = 0, /* row of last occurrence */
+		colend = 0, /* column of last occurrence */
+		passes = 0; /* how many rows have been scanned */
+
+	char *linestr = calloc(term.col+1, sizeof(Rune));
+	char *c = NULL,
+		 *match = NULL;
+
+	row = (sel.ob.x >= 0 && sel.nb.y > 0) ? sel.nb.y : term.bot;
+	LIMIT(row, term.top, term.bot);
+	startrow = row;
+
+	colend = (sel.ob.x >= 0 && sel.nb.y > 0) ? sel.nb.x : term.col;
+	LIMIT(colend, 0, term.col);
+
+	/*
+ 	** Scan from (term.bot,term.col) to (0,0) and find
+	** next occurrance of a URL
+	*/
+	while(passes !=term.bot + 2) {
+		/* Read in each column of every row until
+ 		** we hit previous occurrence of URL
+		*/
+		for (col = 0, i = 0; col < colend; ++col,++i) {
+			linestr[i] = term.line[row][col].u;
+		}
+		linestr[term.col] = '\0';
+
+		if ((match = findlastany(linestr, URLSTRINGS,
+						sizeof(URLSTRINGS)/sizeof(URLSTRINGS[0]))))
+			break;
+
+		if (--row < term.top)
+			row = term.bot;
+
+		colend = term.col;
+		passes++;
+	};
+
+	if (match) {
+		/* must happen before trim */
+		selclear();
+		sel.ob.x = strlen(linestr) - strlen(match);
+
+		/* trim the rest of the line from the url match */
+		for (c = match; *c != '\0'; ++c)
+			if (!strchr(URLCHARS, *c)) {
+				*c = '\0';
+				break;
+			}
+
+		/* highlight selection by inverting terminal colors */
+		tsetcolor(row, sel.ob.x, sel.ob.x + strlen( match ), defaultbg, defaultfg);
+
+		/* select and copy */
+		sel.mode = 1;
+		sel.type = SEL_REGULAR;
+		sel.oe.x = sel.ob.x + strlen(match)-1;
+		sel.ob.y = sel.oe.y = row;
+		selnormalize();
+		tsetdirt(sel.nb.y, sel.ne.y);
+		xsetsel(getsel());
+		xclipcopy();
+	}
+
+	free(linestr);
 }

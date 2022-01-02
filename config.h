@@ -132,6 +132,8 @@ static const char *colorname[] = {
 	/* more colors can be added after 255 to use with DefaultXX */
 	"#2e3440", /* background */
 	"#eceff4", /* foreground */
+	"gray90", /* default foreground colour */
+	"black", /* default background colour */
 };
 
 
@@ -141,7 +143,7 @@ static const char *colorname[] = {
  */
 unsigned int defaultfg = 257;
 unsigned int defaultbg = 256;
-static unsigned int defaultcs = 257;
+unsigned int defaultcs = 257;
 static unsigned int defaultrcs = 256;
 
 /*
@@ -194,7 +196,7 @@ static MouseShortcut mshortcuts[] = {
 };
 
 /* Internal keyboard shortcuts. */
-/* #define MODKEY Mod1Mask */
+#define MODKEY Mod1Mask
 #define TERMMOD (ControlMask|ShiftMask)
 
 static Shortcut shortcuts[] = {
@@ -214,6 +216,7 @@ static Shortcut shortcuts[] = {
 	{ ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
 	{ ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },
 	{ TERMMOD,              XK_Return,      newterm,        {.i =  0} },
+	{ MODKEY,               XK_f,           copyurl,        {.i =  0} },
 };
 
 /*
@@ -485,3 +488,27 @@ static char ascii_printable[] =
 	" !\"#$%&'()*+,-./0123456789:;<=>?"
 	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
 	"`abcdefghijklmnopqrstuvwxyz{|}~";
+
+/**
+ * Undercurl style. Set UNDERCURL_STYLE to one of the available styles.
+ *
+ * Curly: Dunno how to draw it *shrug*
+ *  _   _   _   _
+ * ( ) ( ) ( ) ( )
+ *	 (_) (_) (_) (_)
+ *
+ * Spiky:
+ * /\  /\   /\	/\
+ *   \/  \/	  \/
+ *
+ * Capped:
+ *	_     _     _
+ * / \   / \   / \
+ *    \_/   \_/
+ */
+// Available styles
+#define UNDERCURL_CURLY 0
+#define UNDERCURL_SPIKY 1
+#define UNDERCURL_CAPPED 2
+// Active style
+#define UNDERCURL_STYLE UNDERCURL_SPIKY

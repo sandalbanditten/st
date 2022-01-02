@@ -37,6 +37,7 @@ enum glyph_attribute {
 	ATTR_BOXDRAW    = 1 << 11,
 	ATTR_LIGA       = 1 << 12,
 	ATTR_BOLD_FAINT = ATTR_BOLD | ATTR_FAINT,
+	ATTR_DIRTYUNDERLINE = 1 << 15,
 };
 
 enum selection_mode {
@@ -68,6 +69,8 @@ typedef struct {
 	ushort mode;      /* attribute flags */
 	uint32_t fg;      /* foreground  */
 	uint32_t bg;      /* background  */
+	int ustyle;	  /* underline style */
+	int ucolor[3];    /* underline color */
 } Glyph;
 
 typedef Glyph *Line;
@@ -87,10 +90,12 @@ void draw(void);
 void newterm(const Arg *);
 void kscrolldown(const Arg *);
 void kscrollup(const Arg *);
+void externalpipe(const Arg *);
 void printscreen(const Arg *);
 void printsel(const Arg *);
 void sendbreak(const Arg *);
 void toggleprinter(const Arg *);
+void copyurl(const Arg *);
 
 int tattrset(int);
 void tnew(int, int);
@@ -117,6 +122,8 @@ void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(const char *);
 
+int xgetcolor(int x, unsigned char *r, unsigned char *g, unsigned char *b);
+
 int isboxdraw(Rune);
 ushort boxdrawindex(const Glyph *);
 #ifdef XFT_VERSION
@@ -137,4 +144,5 @@ extern char *termname;
 extern unsigned int tabspaces;
 extern unsigned int defaultfg;
 extern unsigned int defaultbg;
+extern unsigned int defaultcs;
 extern const int boxdraw, boxdraw_bold, boxdraw_braille;
