@@ -22,7 +22,7 @@ Here are the patches I use:
 * [copyurl](https://st.suckless.org/patches/copyurl/)
 * [undercurl](https://st.suckless.org/patches/undercurl/)
 * [w3m images](https://st.suckless.org/patches/w3m/)
-* [dynamic curosr](https://st.suckless.org/patches/dynamic-cursor-color/)
+* [dynamic cursor](https://st.suckless.org/patches/dynamic-cursor-color/)
 
 ## Screenshot
 
@@ -30,4 +30,5 @@ Here is a screenshot of it, running Neovim, Nerdtree and minimap.vim
 ![My build of st](screenshot.png)
 
 ## License
+
 The MIT/X Consortium License
