@@ -31,4 +31,4 @@ Here is a screenshot of it, running Neovim, Nerdtree and minimap.vim
 
 ## License
 
-The MIT/X Consortium License
+The [MIT/X Consortium License](https://mit-license.org/)
