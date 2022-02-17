@@ -180,7 +180,7 @@ static unsigned int defaultattr = 11;
  * Note that if you want to use ShiftMask with selmasks, set this to an other
  * modifier, set to 0 to not use it.
  */
-static uint forcemousemod = ShiftMask;
+static unsigned int forcemousemod = ShiftMask;
 
 /*
  * Internal mouse shortcuts.
@@ -250,7 +250,7 @@ static KeySym mappedkeys[] = { -1 };
  * State bits to ignore when matching key or button events.  By default,
  * numlock (Mod2Mask) and keyboard layout (XK_SWITCH_MOD) are ignored.
  */
-static uint ignoremod = Mod2Mask|XK_SWITCH_MOD;
+static unsigned int ignoremod = Mod2Mask|XK_SWITCH_MOD;
 
 /*
  * This is the huge key array which defines all compatibility to the Linux
@@ -476,7 +476,7 @@ static Key key[] = {
  * ButtonRelease and MotionNotify.
  * If no match is found, regular selection is used.
  */
-static uint selmasks[] = {
+static unsigned int selmasks[] = {
 	[SEL_RECTANGULAR] = Mod1Mask,
 };
 
