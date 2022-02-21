@@ -27,7 +27,7 @@ Here are the patches I use:
 ## Screenshot
 
 Here is a screenshot of it, running Neovim, Nerdtree and minimap.vim
-![My build of st](screenshot.png)
+![My build of st](st.png)
 
 ## License
 
