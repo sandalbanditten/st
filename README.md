@@ -4,14 +4,13 @@ This is my own patched build of the simple terminal.
 There is a list of patches called 'patches.txt'.
 
 This is the terminal I use for several hours on a daily basis.
-It has scrollback, a nord theme, liguatures, boxdraw, copyurl, support for w3m images and a cursor that takes the color of the text it is on.
+It has scrollback, a gruvbox theme, liguatures, boxdraw, copyurl, support for w3m images and a cursor that takes the color of the text it is on.
 
 ## Patches
 
 Here are the patches I use:
 * [anysize](https://st.suckless.org/patches/anysize/)
-* [nordtheme](https://st.suckless.org/patches/nordtheme/)
-		(modified a bit, I prefer orange to purple)
+* [gruvbox](https://st.suckless.org/patches/gruvbox/)
 * [boxdraw](https://st.suckless.org/patches/boxdraw/)
 * [ligatures](https://st.suckless.org/patches/ligatures/)
 		(version that supports boxdraw)
