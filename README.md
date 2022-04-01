@@ -24,6 +24,9 @@ Here are the patches I use:
 * [w3m images](https://st.suckless.org/patches/w3m/)
 * [dynamic cursor](https://st.suckless.org/patches/dynamic-cursor-color/)
 
+I also use libxft-bgra instead of libxft.
+libxft-bgra is in the [AUR](https://aur.archlinux.org/packages/libxft-bgra)
+
 ## Screenshot
 
 Here is a screenshot of it, running Neovim, Nerdtree and minimap.vim
