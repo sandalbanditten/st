@@ -128,7 +128,6 @@ static const char *colorname[] = {
 	[15] = "#ebdbb2", /* white   */
 };
 
-
 /*
  * Default colors (colorname index)
  * foreground, background, cursor, reverse cursor
@@ -486,4 +485,4 @@ static char ascii_printable[] =
 #define UNDERCURL_SPIKY 1
 #define UNDERCURL_CAPPED 2
 // Active style
-#define UNDERCURL_STYLE UNDERCURL_CAPPED
+#define UNDERCURL_STYLE UNDERCURL_SPIKY
