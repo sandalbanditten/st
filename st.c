@@ -2982,7 +2982,7 @@ copyurl(const Arg *arg) {
  	** Scan from (term.bot,term.col) to (0,0) and find
 	** next occurrance of a URL
 	*/
-	while(passes !=term.bot + 2) {
+	while(passes != term.bot + 2) {
 		/* Read in each column of every row until
  		** we hit previous occurrence of URL
 		*/
