@@ -5,8 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-// static char *font   = "Fira Code:size=8:antialias=true:autohint=true";
-static char *font   = "Hasklig:size=8:antialias=true:autohint=true";
+static char *font   = "Fira Code:size=8:antialias=true:autohint=true";
 static int borderpx = 4;
 
 /*
@@ -45,7 +44,7 @@ static unsigned int tripleclicktimeout = 600;
 int allowaltscreen = 1;
 
 /* allow certain non-interactive (insecure) window operations such as:
-	 setting the clipboard text */
+   setting the clipboard text */
 int allowwindowops = 0;
 
 /*
@@ -129,6 +128,7 @@ static const char *colorname[] = {
 	[15] = "#ebdbb2", /* white   */
 };
 
+
 /*
  * Default colors (colorname index)
  * foreground, background, cursor, reverse cursor
@@ -172,7 +172,7 @@ static unsigned int defaultattr = 11;
  * Note that if you want to use ShiftMask with selmasks, set this to an other
  * modifier, set to 0 to not use it.
  */
-static unsigned int forcemousemod = ShiftMask;
+static uint forcemousemod = ShiftMask;
 
 /*
  * Internal mouse shortcuts.
@@ -205,10 +205,6 @@ static Shortcut shortcuts[] = {
 	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
 	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
 	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
-	{ ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
-	{ ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },
-	{ TERMMOD,              XK_Return,      newterm,        {.i =  0} },
-	{ MODKEY,               XK_f,           copyurl,        {.i =  0} },
 };
 
 /*
@@ -242,7 +238,7 @@ static KeySym mappedkeys[] = { -1 };
  * State bits to ignore when matching key or button events.  By default,
  * numlock (Mod2Mask) and keyboard layout (XK_SWITCH_MOD) are ignored.
  */
-static unsigned int ignoremod = Mod2Mask|XK_SWITCH_MOD;
+static uint ignoremod = Mod2Mask|XK_SWITCH_MOD;
 
 /*
  * This is the huge key array which defines all compatibility to the Linux
@@ -468,7 +464,7 @@ static Key key[] = {
  * ButtonRelease and MotionNotify.
  * If no match is found, regular selection is used.
  */
-static unsigned int selmasks[] = {
+static uint selmasks[] = {
 	[SEL_RECTANGULAR] = Mod1Mask,
 };
 
@@ -477,10 +473,13 @@ static unsigned int selmasks[] = {
  * of single wide characters.
  */
 static char ascii_printable[] =
-" !\"#$%&'()*+,-./0123456789:;<=>?"
-"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
-"`abcdefghijklmnopqrstuvwxyz{|}~";
+	" !\"#$%&'()*+,-./0123456789:;<=>?"
+	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
+	"`abcdefghijklmnopqrstuvwxyz{|}~";
 
+/**
+ * Undercurl style. Set UNDERCURL_STYLE to one of the available styles.
+ */
 // Available styles
 #define UNDERCURL_CURLY 0
 #define UNDERCURL_SPIKY 1
