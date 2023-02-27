@@ -10,27 +10,19 @@ It has scrollback, a gruvbox theme, liguatures, boxdraw, copyurl, support for w3
 
 Here are the patches I use:
 * [anysize](https://st.suckless.org/patches/anysize/)
-* [gruvbox](https://st.suckless.org/patches/gruvbox/)
 * [boxdraw](https://st.suckless.org/patches/boxdraw/)
 * [ligatures](https://st.suckless.org/patches/ligatures/)
 		(version that supports boxdraw)
 * [bold not bright](https://st.suckless.org/patches/bold-is-not-bright/)
-* [newterm](https://st.suckless.org/patches/newterm/)
-* [scrollback](https://st.suckless.org/patches/scrollback/)
-* [externalpipe](https://st.suckless.org/patches/externalpipe/)
-* [copyurl](https://st.suckless.org/patches/copyurl/)
 * [undercurl](https://st.suckless.org/patches/undercurl/)
-* [w3m images](https://st.suckless.org/patches/w3m/)
 * [dynamic cursor](https://st.suckless.org/patches/dynamic-cursor-color/)
-
-I also use libxft-bgra instead of libxft.
-libxft-bgra is in the [AUR](https://aur.archlinux.org/packages/libxft-bgra)
 
 ## Screenshot
 
-Here is a screenshot of it, running Neovim, Nerdtree and minimap.vim
+Here is a screenshot of it, running tmux and Helix
 ![My build of st](st.png)
 
 ## License
 
 The [MIT/X Consortium License](https://mit-license.org/)
+See LICENSE for copyright holders
