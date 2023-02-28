@@ -16,6 +16,7 @@ Here are the patches I use:
 * [bold not bright](https://st.suckless.org/patches/bold-is-not-bright/)
 * [undercurl](https://st.suckless.org/patches/undercurl/)
 * [dynamic cursor](https://st.suckless.org/patches/dynamic-cursor-color/)
+* [CSI 22-23](https://st.suckless.org/patches/csi_22_23/)
 
 ## Screenshot
 
