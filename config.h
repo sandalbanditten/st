@@ -5,7 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font   = "Fira Code:size=8:antialias=true:autohint=true";
+static char *font   = "Fira Code Medium:size=8:antialias=true:autohint=true";
 static int borderpx = 4;
 
 /*
@@ -77,6 +77,7 @@ const int boxdraw = 1;
 const int boxdraw_bold = 0;
 
 /* braille (U28XX):  1: render as adjacent "pixels",  0: use font */
+/* having issues with "full" braille? install ttf-delugia-code from the AUR */
 const int boxdraw_braille = 0;
 
 /*
@@ -157,7 +158,7 @@ static unsigned int rows = 24;
 /*
  * Default colour and shape of the mouse cursor
  */
-static unsigned int mouseshape = XC_xterm;
+static unsigned int mouseshape = XC_left_ptr;
 static unsigned int mousefg = 7;
 static unsigned int mousebg = 0;
 
